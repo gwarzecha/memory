@@ -16,6 +16,7 @@ function App() {
   const [turns, setTurns] = useState(0);
   const [choiceOne, setChoiceOne] = useState(null);
   const [choiceTwo, setChoiceTwo] = useState(null);
+  const [disabled, setDisabled] = useState(false);
 
   // shuffle cards
   const shuffleCards = () => {
@@ -25,6 +26,8 @@ function App() {
       // spreads all properties of the card, adds an id to each card
       .map((card) => ({ ...card, id: Math.random() }));
 
+    setChoiceOne(null);
+    setChoiceTwo(null);
     setCards(shuffledCards);
     setTurns(0);
   };
@@ -37,6 +40,8 @@ function App() {
   // compare two selected cards
   useEffect(() => {
     if (choiceOne && choiceTwo) {
+      setDisabled(true);
+
       if (choiceOne.src === choiceTwo.src) {
         setCards((prevCards) => {
           return prevCards.map((card) => {
@@ -49,9 +54,11 @@ function App() {
         });
         resetTurn();
       } else {
-        resetTurn();
+        // creates delay when no match revealed
+        setTimeout(() => resetTurn(), 1000);
       }
     }
+    // runs this useEffect hook anytime choiceOne or choiceTwo are changed
   }, [choiceOne, choiceTwo]);
 
   console.log(cards);
@@ -61,7 +68,13 @@ function App() {
     setChoiceOne(null);
     setChoiceTwo(null);
     setTurns((prevTurns) => prevTurns + 1);
+    setDisabled(false);
   };
+
+  // Start new game automatically when component mounts
+  useEffect(() => {
+    shuffleCards();
+  }, []);
 
   return (
     <div className="App">
@@ -69,9 +82,16 @@ function App() {
       <button onClick={shuffleCards}>New Game!</button>
       <div className="card-grid">
         {cards.map((card) => (
-          <SingleCard key={card.id} card={card} handleChoice={handleChoice} />
+          <SingleCard
+            key={card.id}
+            card={card}
+            handleChoice={handleChoice}
+            flipped={card === choiceOne || card === choiceTwo || card.matched}
+            disabled={disabled}
+          />
         ))}
       </div>
+      <p>Turns: {turns}</p>
     </div>
   );
 }
